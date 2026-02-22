@@ -28,3 +28,15 @@ This project is a Mid-Semester Capstone Project for EEE227 – Introduction to C
 - Display attendance list for a session
 - Show summary counts (Present, Absent, Late)
 - Basic input validation (numeric choices, safe reads)
+
+## Week 4 Progress
+- Implemented **file persistence** using plain text files (`fstream`)
+  - Students saved/loaded from `students.txt` (format: `INDEX|Full Name`)
+  - Sessions saved/loaded from `session_<COURSE>_<DATE>.txt`
+    - First line: `COURSE|DATE|STARTTIME|DURATION`
+    - Following lines: `Index|STATUS` where STATUS ∈ {PRESENT, ABSENT, LATE}
+- Loaded students automatically at program start
+- Added menu options:
+  - **Main Menu:** Save Students to File
+  - **Sessions Menu:** Save Current Session, Load Session From File
+- Minor refactors & comments for readability
