@@ -4,17 +4,17 @@ This project is a Mid-Semester Capstone Project for EEE227 – Introduction to C
 
 ## Week 1 Progress
 
-### ✔ Implemented Student Class
+### Implemented Student Class
 - Fields:
   - `indexNumber`
   - `fullName`
 - Includes constructor, getters, and display method.
 
-### ✔ Student Management (Week 1 Requirements)
+### Student Management (Week 1 Requirements)
 - Add student
 - View all registered students
 
-### ✔ Project Structure (Week 1)
+### Project Structure (Week 1)
 
 ## Week 2 Progress
 - Implemented `AttendanceSession` class
