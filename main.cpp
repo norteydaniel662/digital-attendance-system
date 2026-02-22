@@ -49,7 +49,7 @@ static int readInt(const string& prompt, int minVal, int maxVal) {
     }
 }
 
-// ---------- NEW (Week 4) Students persistence ----------
+// ---------- Week 4: Students persistence ----------
 static bool saveStudentsToFile(const string& filename = "students.txt") {
     ofstream out(filename);
     if (!out) {
@@ -65,7 +65,7 @@ static bool saveStudentsToFile(const string& filename = "students.txt") {
 static bool loadStudentsFromFile(const string& filename = "students.txt") {
     ifstream in(filename);
     if (!in) {
-        // No file yet is OK (first run)
+        // No file yet is OK
         return false;
     }
     g_students.clear();
@@ -251,6 +251,36 @@ void displayAttendanceList() {
          << ", Late: "    << l << "\n";
 }
 
+// ---------- NEW (Week 4) Session persistence ----------
+void saveCurrentSession() {
+    if (!g_hasCurrentSession) {
+        cout << "No active session to save.\n";
+        return;
+    }
+    if (g_currentSession.saveToFile()) {
+        cout << "Session saved to " << g_currentSession.defaultFileName() << "\n";
+    } else {
+        cout << "Failed to save session.\n";
+    }
+}
+
+void loadSessionFromFile() {
+    cout << "\n--- Load Session From File ---\n";
+    cout << "Enter file name (e.g., session_EE201_2026-02-17.txt): ";
+    string fname;
+    cin >> fname; clearInput();
+
+    AttendanceSession s;
+    if (AttendanceSession::loadFromFile(fname, s)) {
+        g_currentSession = s;
+        g_hasCurrentSession = true;
+        cout << "Loaded session " << g_currentSession.getCourseCode()
+             << " on " << g_currentSession.getDate() << ".\n";
+    } else {
+        cout << "Failed to load session from " << fname << ".\n";
+    }
+}
+
 // ---------- Menus ----------
 void studentsMenu() {
     int choice = -1;
@@ -280,7 +310,9 @@ void sessionsMenu() {
              << "3. Mark Attendance\n"
              << "4. Update Attendance\n"
              << "5. Display Attendance + Summary\n"
-             << "6. Back\n"
+             << "6. Save Current Session to File\n"  // NEW
+             << "7. Load Session From File\n"        // NEW
+             << "8. Back\n"
              << "Enter choice: ";
         if (!(cin >> choice)) { clearInput(); continue; }
 
@@ -290,14 +322,16 @@ void sessionsMenu() {
             case 3: markAttendance(); break;
             case 4: updateAttendance(); break;
             case 5: displayAttendanceList(); break;
-            case 6: break;
+            case 6: saveCurrentSession(); break;
+            case 7: loadSessionFromFile(); break;
+            case 8: break;
             default: cout << "Invalid choice.\n";
         }
-    } while (choice != 6);
+    } while (choice != 8);
 }
 
 void mainMenu() {
-    // NEW: load students on startup (OK if file not found)
+    // load students on startup (OK if file not found)
     loadStudentsFromFile();
 
     int choice = -1;
@@ -305,7 +339,7 @@ void mainMenu() {
         cout << "\n===== DIGITAL ATTENDANCE SYSTEM =====\n"
              << "1. Student Management\n"
              << "2. Attendance Sessions\n"
-             << "3. Save Students to File\n"  // NEW
+             << "3. Save Students to File\n"
              << "4. Exit\n"
              << "Enter choice: ";
         if (!(cin >> choice)) { clearInput(); continue; }
@@ -327,5 +361,6 @@ int main() {
     mainMenu();
     return 0;
 }
+
 
 
