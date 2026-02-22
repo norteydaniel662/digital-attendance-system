@@ -2,6 +2,8 @@
 #include <vector>
 #include <limits>
 #include <string>
+#include <fstream>
+#include <sstream>
 #include "Student.h"
 #include "AttendanceSession.h"
 
@@ -47,7 +49,40 @@ static int readInt(const string& prompt, int minVal, int maxVal) {
     }
 }
 
-// ---------- Student features (Week 1) ----------
+// ---------- NEW (Week 4) Students persistence ----------
+static bool saveStudentsToFile(const string& filename = "students.txt") {
+    ofstream out(filename);
+    if (!out) {
+        cout << "ERROR: Could not open " << filename << " for writing.\n";
+        return false;
+    }
+    for (const auto& s : g_students) {
+        out << s.getIndexNumber() << "|" << s.getFullName() << "\n";
+    }
+    return true;
+}
+
+static bool loadStudentsFromFile(const string& filename = "students.txt") {
+    ifstream in(filename);
+    if (!in) {
+        // No file yet is OK (first run)
+        return false;
+    }
+    g_students.clear();
+
+    string line;
+    while (getline(in, line)) {
+        if (line.empty()) continue;
+        istringstream iss(line);
+        string idx, name;
+        if (!getline(iss, idx, '|')) continue;
+        if (!getline(iss, name, '|')) continue;
+        g_students.emplace_back(idx, name);
+    }
+    return true;
+}
+
+// ---------- Student features ----------
 void addStudent() {
     string index, name;
     cout << "\n--- Add Student ---\n";
@@ -123,8 +158,7 @@ void showCurrentSession() {
          << "Duration: " << g_currentSession.getDurationMinutes() << " minutes\n";
 }
 
-// ---------- NEW Week 3 features ----------
-
+// ---------- Week 3 features ----------
 static Status chooseStatus() {
     cout << "Choose status: \n"
          << "  1) Present\n"
@@ -135,7 +169,7 @@ static Status chooseStatus() {
         case 1: return Status::Present;
         case 2: return Status::Absent;
         case 3: return Status::Late;
-        default: return Status::Absent; // should never hit
+        default: return Status::Absent;
     }
 }
 
@@ -263,26 +297,35 @@ void sessionsMenu() {
 }
 
 void mainMenu() {
+    // NEW: load students on startup (OK if file not found)
+    loadStudentsFromFile();
+
     int choice = -1;
     do {
         cout << "\n===== DIGITAL ATTENDANCE SYSTEM =====\n"
              << "1. Student Management\n"
              << "2. Attendance Sessions\n"
-             << "3. Exit\n"
+             << "3. Save Students to File\n"  // NEW
+             << "4. Exit\n"
              << "Enter choice: ";
         if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
             case 1: studentsMenu(); break;
             case 2: sessionsMenu(); break;
-            case 3: cout << "Exiting...\n"; break;
+            case 3:
+                if (saveStudentsToFile()) cout << "Students saved to students.txt\n";
+                else cout << "Failed to save students.\n";
+                break;
+            case 4: cout << "Exiting...\n"; break;
             default: cout << "Invalid choice.\n";
         }
-    } while (choice != 3);
+    } while (choice != 4);
 }
 
 int main() {
     mainMenu();
     return 0;
 }
+
 
