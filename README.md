@@ -15,3 +15,9 @@ This project is a Mid-Semester Capstone Project for EEE227 – Introduction to C
 - View all registered students
 
 ### ✔ Project Structure (Week 1)
+
+## Week 2 Progress
+- Implemented `AttendanceSession` class
+- Added menu-driven flow for sessions
+- Can create a lecture session with: course code, date, start time, and duration
+- Shows the current session details after creation
