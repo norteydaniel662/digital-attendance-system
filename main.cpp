@@ -7,7 +7,7 @@
 
 using namespace std;
 
-// ===== In-memory data (Week 1 + Week 2) =====
+// ===== In-memory data =====
 vector<Student> g_students;
 
 AttendanceSession g_currentSession;
@@ -21,6 +21,11 @@ static string trim(const string& s) {
     return s.substr(start, end - start + 1);
 }
 
+static void clearInput() {
+    cin.clear();
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+}
+
 static bool indexExists(const string& index) {
     for (const auto& s : g_students) {
         if (s.getIndexNumber() == index) return true;
@@ -28,12 +33,26 @@ static bool indexExists(const string& index) {
     return false;
 }
 
+static int readInt(const string& prompt, int minVal, int maxVal) {
+    int v;
+    while (true) {
+        cout << prompt;
+        if (cin >> v && v >= minVal && v <= maxVal) {
+            clearInput();
+            return v;
+        }
+        cout << "Invalid input. Please enter a number between "
+             << minVal << " and " << maxVal << ".\n";
+        clearInput();
+    }
+}
+
 // ---------- Student features (Week 1) ----------
 void addStudent() {
     string index, name;
     cout << "\n--- Add Student ---\n";
     cout << "Enter Index Number: ";
-    cin >> index;
+    cin >> index; clearInput();
     index = trim(index);
 
     if (indexExists(index)) {
@@ -41,7 +60,6 @@ void addStudent() {
         return;
     }
 
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
     cout << "Enter Full Name: ";
     getline(cin, name);
     name = trim(name);
@@ -71,17 +89,15 @@ void createSession() {
     int duration = 0;
 
     cout << "Course Code (e.g., EE201): ";
-    cin >> course;
+    cin >> course; clearInput();
 
     cout << "Date (YYYY-MM-DD): ";
-    cin >> date;
+    cin >> date; clearInput();
 
     cout << "Start Time (HH:MM): ";
-    cin >> startTime;
+    cin >> startTime; clearInput();
 
-    cout << "Duration (minutes): ";
-    cin >> duration;
-    if (duration < 0) duration = 0;
+    duration = readInt("Duration (minutes): ", 0, 600);
 
     g_currentSession = AttendanceSession(course, date, startTime, duration);
     g_hasCurrentSession = true;
@@ -107,6 +123,100 @@ void showCurrentSession() {
          << "Duration: " << g_currentSession.getDurationMinutes() << " minutes\n";
 }
 
+// ---------- NEW Week 3 features ----------
+
+static Status chooseStatus() {
+    cout << "Choose status: \n"
+         << "  1) Present\n"
+         << "  2) Absent\n"
+         << "  3) Late\n";
+    int opt = readInt("Select 1-3: ", 1, 3);
+    switch (opt) {
+        case 1: return Status::Present;
+        case 2: return Status::Absent;
+        case 3: return Status::Late;
+        default: return Status::Absent; // should never hit
+    }
+}
+
+void markAttendance() {
+    if (!g_hasCurrentSession) {
+        cout << "No active session. Create a session first.\n";
+        return;
+    }
+
+    cout << "\n--- Mark Attendance ---\n";
+    cout << "Enter index numbers one by one. Type 'DONE' to finish.\n";
+
+    while (true) {
+        cout << "Index Number (or DONE): ";
+        string idx;
+        cin >> idx; clearInput();
+
+        if (idx == "DONE" || idx == "done") break;
+
+        if (!indexExists(idx)) {
+            cout << "WARNING: Index not found in student list. "
+                 << "You can still record it, but consider adding the student.\n";
+        }
+
+        Status st = chooseStatus();
+        g_currentSession.addOrUpdateRecord(idx, st);
+        cout << "Recorded " << idx << ".\n";
+    }
+}
+
+void updateAttendance() {
+    if (!g_hasCurrentSession) {
+        cout << "No active session. Create a session first.\n";
+        return;
+    }
+
+    cout << "\n--- Update Attendance ---\n";
+    cout << "Enter Index Number to update: ";
+    string idx;
+    cin >> idx; clearInput();
+
+    Status st = chooseStatus();
+    if (g_currentSession.updateRecord(idx, st)) {
+        cout << "Updated record for " << idx << ".\n";
+    } else {
+        cout << "No record found for " << idx << " in this session.\n";
+    }
+}
+
+void displayAttendanceList() {
+    if (!g_hasCurrentSession) {
+        cout << "No active session. Create a session first.\n";
+        return;
+    }
+
+    cout << "\n--- Attendance List for "
+         << g_currentSession.getCourseCode() << " on "
+         << g_currentSession.getDate() << " ---\n";
+
+    const auto& recs = g_currentSession.getRecords();
+    if (recs.empty()) {
+        cout << "No attendance records yet.\n";
+    } else {
+        for (const auto& r : recs) {
+            cout << "Index: " << r.indexNumber << "  Status: ";
+            switch (r.status) {
+                case Status::Present: cout << "PRESENT"; break;
+                case Status::Absent:  cout << "ABSENT";  break;
+                case Status::Late:    cout << "LATE";    break;
+            }
+            cout << "\n";
+        }
+    }
+
+    int p, a, l;
+    g_currentSession.summaryCounts(p, a, l);
+    cout << "Summary -> Present: " << p
+         << ", Absent: "  << a
+         << ", Late: "    << l << "\n";
+}
+
 // ---------- Menus ----------
 void studentsMenu() {
     int choice = -1;
@@ -116,7 +226,7 @@ void studentsMenu() {
              << "2. View Students\n"
              << "3. Back\n"
              << "Enter choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
             case 1: addStudent(); break;
@@ -130,20 +240,26 @@ void studentsMenu() {
 void sessionsMenu() {
     int choice = -1;
     do {
-        cout << "\n=== LECTURE SESSIONS (WEEK 2) ===\n"
+        cout << "\n=== LECTURE SESSIONS ===\n"
              << "1. Create Session\n"
              << "2. Show Current Session\n"
-             << "3. Back\n"
+             << "3. Mark Attendance\n"
+             << "4. Update Attendance\n"
+             << "5. Display Attendance + Summary\n"
+             << "6. Back\n"
              << "Enter choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
             case 1: createSession(); break;
             case 2: showCurrentSession(); break;
-            case 3: break;
+            case 3: markAttendance(); break;
+            case 4: updateAttendance(); break;
+            case 5: displayAttendanceList(); break;
+            case 6: break;
             default: cout << "Invalid choice.\n";
         }
-    } while (choice != 3);
+    } while (choice != 6);
 }
 
 void mainMenu() {
@@ -151,10 +267,10 @@ void mainMenu() {
     do {
         cout << "\n===== DIGITAL ATTENDANCE SYSTEM =====\n"
              << "1. Student Management\n"
-             << "2. Attendance Sessions (Week 2)\n"
+             << "2. Attendance Sessions\n"
              << "3. Exit\n"
              << "Enter choice: ";
-        cin >> choice;
+        if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
             case 1: studentsMenu(); break;
@@ -169,3 +285,4 @@ int main() {
     mainMenu();
     return 0;
 }
+
