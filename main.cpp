@@ -11,7 +11,6 @@ using namespace std;
 
 // ===== In-memory data =====
 vector<Student> g_students;
-
 AttendanceSession g_currentSession;
 bool g_hasCurrentSession = false;
 
@@ -43,8 +42,7 @@ static int readInt(const string& prompt, int minVal, int maxVal) {
             clearInput();
             return v;
         }
-        cout << "Invalid input. Please enter a number between "
-             << minVal << " and " << maxVal << ".\n";
+        cout << "Invalid input. Enter between " << minVal << " and " << maxVal << ".\n";
         clearInput();
     }
 }
@@ -52,31 +50,27 @@ static int readInt(const string& prompt, int minVal, int maxVal) {
 // ---------- Week 4: Students persistence ----------
 static bool saveStudentsToFile(const string& filename = "students.txt") {
     ofstream out(filename);
-    if (!out) {
-        cout << "ERROR: Could not open " << filename << " for writing.\n";
-        return false;
-    }
-    for (const auto& s : g_students) {
+    if (!out) return false;
+
+    for (const auto& s : g_students)
         out << s.getIndexNumber() << "|" << s.getFullName() << "\n";
-    }
+
     return true;
 }
 
 static bool loadStudentsFromFile(const string& filename = "students.txt") {
     ifstream in(filename);
-    if (!in) {
-        return false;
-    }
-    g_students.clear();
+    if (!in) return false;
 
+    g_students.clear();
     string line;
+
     while (getline(in, line)) {
-        if (line.empty()) continue;
         istringstream iss(line);
         string idx, name;
-        if (!getline(iss, idx, '|')) continue;
-        if (!getline(iss, name, '|')) continue;
-        g_students.emplace_back(idx, name);
+
+        if (getline(iss, idx, '|') && getline(iss, name, '|'))
+            g_students.emplace_back(idx, name);
     }
     return true;
 }
@@ -90,7 +84,7 @@ void addStudent() {
     index = trim(index);
 
     if (indexExists(index)) {
-        cout << "A student with this index already exists.\n";
+        cout << "Index already exists.\n";
         return;
     }
 
@@ -99,18 +93,18 @@ void addStudent() {
     name = trim(name);
 
     if (index.empty() || name.empty()) {
-        cout << "Index and Name cannot be empty.\n";
+        cout << "Inputs cannot be empty.\n";
         return;
     }
 
     g_students.emplace_back(index, name);
-    cout << "Student added successfully.\n";
+    cout << "Student added.\n";
 }
 
 void viewStudents() {
     cout << "\n--- Registered Students ---\n";
     if (g_students.empty()) {
-        cout << "No students registered yet.\n";
+        cout << "No students.\n";
         return;
     }
     for (const auto& s : g_students) s.display();
@@ -118,11 +112,10 @@ void viewStudents() {
 
 // ---------- Session features (Week 2) ----------
 void createSession() {
-    cout << "\n--- Create Lecture Session ---\n";
+    cout << "\n--- Create Session ---\n";
     string course, date, startTime;
-    int duration = 0;
 
-    cout << "Course Code (e.g., EE201): ";
+    cout << "Course Code: ";
     cin >> course; clearInput();
 
     cout << "Date (YYYY-MM-DD): ";
@@ -131,149 +124,126 @@ void createSession() {
     cout << "Start Time (HH:MM): ";
     cin >> startTime; clearInput();
 
-    duration = readInt("Duration (minutes): ", 0, 600);
+    int duration = readInt("Duration (minutes): ", 0, 600);
 
     g_currentSession = AttendanceSession(course, date, startTime, duration);
     g_hasCurrentSession = true;
 
-    cout << "Session created successfully.\n";
-    cout << "Course: " << g_currentSession.getCourseCode()
-         << ", Date: " << g_currentSession.getDate()
-         << ", Start: " << g_currentSession.getStartTime()
-         << ", Duration: " << g_currentSession.getDurationMinutes() << " mins\n";
-    cout << "Default session file name will be: "
+    cout << "Session created. File: "
          << g_currentSession.defaultFileName() << "\n";
 }
 
 void showCurrentSession() {
     cout << "\n--- Current Session ---\n";
     if (!g_hasCurrentSession) {
-        cout << "No session created yet.\n";
+        cout << "No session.\n";
         return;
     }
     cout << "Course: " << g_currentSession.getCourseCode() << "\n"
          << "Date: " << g_currentSession.getDate() << "\n"
-         << "Start Time: " << g_currentCurrentSession.getStartTime() << "\n"
-         << "Duration: " << g_currentSession.getDurationMinutes() << " minutes\n";
+         << "Start Time: " << g_currentSession.getStartTime() << "\n"
+         << "Duration: " << g_currentSession.getDurationMinutes() << " mins\n";
 }
 
 // ---------- Week 3 features ----------
 static Status chooseStatus() {
-    cout << "Choose status: \n"
-         << "  1) Present\n"
-         << "  2) Absent\n"
-         << "  3) Late\n";
-    int opt = readInt("Select 1-3: ", 1, 3);
-    switch (opt) {
-        case 1: return Status::Present;
-        case 2: return Status::Absent;
-        case 3: return Status::Late;
-        default: return Status::Absent;
-    }
+    cout << "Status:\n1) Present\n2) Absent\n3) Late\n";
+    int opt = readInt("Choose (1-3): ", 1, 3);
+    return (opt == 1) ? Status::Present :
+           (opt == 2) ? Status::Absent :
+                        Status::Late;
 }
 
 void markAttendance() {
     if (!g_hasCurrentSession) {
-        cout << "No active session. Create a session first.\n";
+        cout << "No session.\n";
         return;
     }
 
     cout << "\n--- Mark Attendance ---\n";
-    cout << "Enter index numbers one by one. Type 'DONE' to finish.\n";
+    cout << "Enter index or 'DONE'.\n";
 
     while (true) {
-        cout << "Index Number (or DONE): ";
+        cout << "Index: ";
         string idx;
         cin >> idx; clearInput();
 
         if (idx == "DONE" || idx == "done") break;
 
-        if (!indexExists(idx)) {
-            cout << "WARNING: Index not found in student list.\n";
-        }
-
         Status st = chooseStatus();
         g_currentSession.addOrUpdateRecord(idx, st);
-        cout << "Recorded " << idx << ".\n";
+        cout << "Recorded.\n";
     }
 }
 
 void updateAttendance() {
     if (!g_hasCurrentSession) {
-        cout << "No active session. Create a session first.\n";
+        cout << "No session.\n";
         return;
     }
 
-    cout << "\n--- Update Attendance ---\n";
-    cout << "Enter Index Number to update: ";
+    cout << "Index to update: ";
     string idx;
     cin >> idx; clearInput();
 
     Status st = chooseStatus();
-    if (g_currentSession.updateRecord(idx, st)) {
-        cout << "Updated record for " << idx << ".\n";
-    } else {
-        cout << "No record found for " << idx << ".\n";
-    }
+
+    if (g_currentSession.updateRecord(idx, st))
+        cout << "Updated.\n";
+    else
+        cout << "No record found.\n";
 }
 
 void displayAttendanceList() {
     if (!g_hasCurrentSession) {
-        cout << "No active session.\n";
+        cout << "No session.\n";
         return;
     }
 
-    cout << "\n--- Attendance List for "
-         << g_currentSession.getCourseCode() << " on "
-         << g_currentSession.getDate() << " ---\n";
-
+    cout << "\n--- Attendance List ---\n";
     const auto& recs = g_currentSession.getRecords();
+
     if (recs.empty()) {
-        cout << "No attendance records yet.\n";
-    } else {
-        for (const auto& r : recs) {
-            cout << "Index: " << r.indexNumber << "  Status: ";
-            switch (r.status) {
-                case Status::Present: cout << "PRESENT"; break;
-                case Status::Absent:  cout << "ABSENT";  break;
-                case Status::Late:    cout << "LATE";    break;
-            }
-            cout << "\n";
-        }
+        cout << "No records.\n";
+        return;
+    }
+
+    for (const auto& r : recs) {
+        string status =
+            (r.status == Status::Present) ? "PRESENT" :
+            (r.status == Status::Absent)  ? "ABSENT"  :
+                                            "LATE";
+        cout << "Index: " << r.indexNumber << " | " << status << "\n";
     }
 
     int p, a, l;
     g_currentSession.summaryCounts(p, a, l);
-    cout << "Summary -> Present: " << p
-         << ", Absent: "  << a
-         << ", Late: "    << l << "\n";
+
+    cout << "Summary: Present=" << p
+         << ", Absent=" << a
+         << ", Late=" << l << "\n";
 }
 
-// ---------- Week 4: Export to Excel-friendly CSV ----------
+// ---------- Week 4: CSV Export ----------
 void exportSessionToCSV() {
     if (!g_hasCurrentSession) {
-        cout << "No active session to export.\n";
+        cout << "No session.\n";
         return;
     }
 
-    string filename = "attendance_export.csv";
-    ofstream out(filename);
-
+    ofstream out("attendance_export.csv");
     if (!out) {
-        cout << "Failed to create CSV file.\n";
+        cout << "Could not write CSV.\n";
         return;
     }
 
     out << "Index Number,Status\n";
 
     for (const auto& r : g_currentSession.getRecords()) {
-        string statusText;
-        switch (r.status) {
-            case Status::Present: statusText = "PRESENT"; break;
-            case Status::Absent:  statusText = "ABSENT";  break;
-            case Status::Late:    statusText = "LATE";    break;
-        }
-        out << r.indexNumber << "," << statusText << "\n";
+        string s = (r.status == Status::Present) ? "PRESENT" :
+                   (r.status == Status::Absent)  ? "ABSENT"  :
+                                                   "LATE";
+        out << r.indexNumber << "," << s << "\n";
     }
 
     int p, a, l;
@@ -284,25 +254,23 @@ void exportSessionToCSV() {
     out << "Absent,"  << a << "\n";
     out << "Late,"    << l << "\n";
 
-    out.close();
-
-    cout << "Exported to " << filename << "\n";
+    cout << "Exported to attendance_export.csv\n";
 }
 
+// ---------- Week 4: Save/Load Session ----------
 void saveCurrentSession() {
     if (!g_hasCurrentSession) {
-        cout << "No active session to save.\n";
+        cout << "No session.\n";
         return;
     }
-    if (g_currentSession.saveToFile()) {
-        cout << "Session saved to " << g_currentSession.defaultFileName() << "\n";
-    } else {
-        cout << "Failed to save session.\n";
-    }
+    if (g_currentSession.saveToFile())
+        cout << "Session saved.\n";
+    else
+        cout << "Save failed.\n";
 }
 
 void loadSessionFromFile() {
-    cout << "\nEnter session filename: ";
+    cout << "Enter session filename: ";
     string fname;
     cin >> fname; clearInput();
 
@@ -312,7 +280,7 @@ void loadSessionFromFile() {
         g_hasCurrentSession = true;
         cout << "Session loaded.\n";
     } else {
-        cout << "Failed to load session.\n";
+        cout << "Load failed.\n";
     }
 }
 
@@ -325,14 +293,10 @@ void studentsMenu() {
              << "2. View Students\n"
              << "3. Back\n";
 
-        if (!(cin >> choice)) { clearInput(); continue; }
+        cin >> choice; clearInput();
 
-        switch (choice) {
-            case 1: addStudent(); break;
-            case 2: viewStudents(); break;
-            case 3: break;
-            default: cout << "Invalid choice.\n";
-        }
+        if (choice == 1) addStudent();
+        else if (choice == 2) viewStudents();
 
     } while (choice != 3);
 }
@@ -340,57 +304,50 @@ void studentsMenu() {
 void sessionsMenu() {
     int choice = -1;
     do {
-        cout << "\n=== LECTURE SESSIONS ===\n"
+        cout << "\n=== ATTENDANCE SESSIONS ===\n"
              << "1. Create Session\n"
              << "2. Show Current Session\n"
              << "3. Mark Attendance\n"
              << "4. Update Attendance\n"
-             << "5. Display Attendance + Summary\n"
+             << "5. Display Attendance\n"
              << "6. Save Current Session\n"
              << "7. Load Session From File\n"
-             << "8. Export Attendance to Excel (CSV)\n"
+             << "8. Export to Excel (CSV)\n"
              << "9. Back\n";
 
-        if (!(cin >> choice)) { clearInput(); continue; }
+        cin >> choice; clearInput();
 
-        switch (choice) {
-            case 1: createSession(); break;
-            case 2: showCurrentSession(); break;
-            case 3: markAttendance(); break;
-            case 4: updateAttendance(); break;
-            case 5: displayAttendanceList(); break;
-            case 6: saveCurrentSession(); break;
-            case 7: loadSessionFromFile(); break;
-            case 8: exportSessionToCSV(); break;
-            case 9: break;
-            default: cout << "Invalid choice.\n";
-        }
+        if (choice == 1) createSession();
+        else if (choice == 2) showCurrentSession();
+        else if (choice == 3) markAttendance();
+        else if (choice == 4) updateAttendance();
+        else if (choice == 5) displayAttendanceList();
+        else if (choice == 6) saveCurrentSession();
+        else if (choice == 7) loadSessionFromFile();
+        else if (choice == 8) exportSessionToCSV();
+
     } while (choice != 9);
 }
 
+// ---------- Main Program ----------
 void mainMenu() {
-    loadStudentsFromFile(); // Auto-load
+    loadStudentsFromFile();
 
     int choice = -1;
     do {
         cout << "\n===== DIGITAL ATTENDANCE SYSTEM =====\n"
              << "1. Student Management\n"
              << "2. Attendance Sessions\n"
-             << "3. Save Students to File\n"
+             << "3. Save Students\n"
              << "4. Exit\n";
 
-        if (!(cin >> choice)) { clearInput(); continue; }
+        cin >> choice; clearInput();
 
-        switch (choice) {
-            case 1: studentsMenu(); break;
-            case 2: sessionsMenu(); break;
-            case 3:
-                if (saveStudentsToFile()) cout << "Students saved.\n";
-                else cout << "Failed.\n";
-                break;
-            case 4: cout << "Goodbye!\n"; break;
-            default: cout << "Invalid choice.\n";
-        }
+        if (choice == 1) studentsMenu();
+        else if (choice == 2) sessionsMenu();
+        else if (choice == 3) 
+            saveStudentsToFile() ? 
+            cout << "Saved.\n" : cout << "Save failed.\n";
 
     } while (choice != 4);
 }
@@ -399,6 +356,7 @@ int main() {
     mainMenu();
     return 0;
 }
+
 
 
 
