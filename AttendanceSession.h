@@ -6,8 +6,8 @@
 
 enum class Status {
     Present = 1,
-    Absent  = 2,
-    Late    = 3
+    Absent = 2,
+    Late = 3
 };
 
 struct AttendanceRecord {
@@ -26,8 +26,7 @@ private:
     static std::string sanitize(const std::string& s);
 
 public:
-    AttendanceSession() = default;
-
+    AttendanceSession();
     AttendanceSession(const std::string& c,
                       const std::string& d,
                       const std::string& t,
