@@ -65,7 +65,6 @@ static bool saveStudentsToFile(const string& filename = "students.txt") {
 static bool loadStudentsFromFile(const string& filename = "students.txt") {
     ifstream in(filename);
     if (!in) {
-        // No file yet is OK
         return false;
     }
     g_students.clear();
@@ -154,7 +153,7 @@ void showCurrentSession() {
     }
     cout << "Course: " << g_currentSession.getCourseCode() << "\n"
          << "Date: " << g_currentSession.getDate() << "\n"
-         << "Start Time: " << g_currentSession.getStartTime() << "\n"
+         << "Start Time: " << g_currentCurrentSession.getStartTime() << "\n"
          << "Duration: " << g_currentSession.getDurationMinutes() << " minutes\n";
 }
 
@@ -190,8 +189,7 @@ void markAttendance() {
         if (idx == "DONE" || idx == "done") break;
 
         if (!indexExists(idx)) {
-            cout << "WARNING: Index not found in student list. "
-                 << "You can still record it, but consider adding the student.\n";
+            cout << "WARNING: Index not found in student list.\n";
         }
 
         Status st = chooseStatus();
@@ -215,13 +213,13 @@ void updateAttendance() {
     if (g_currentSession.updateRecord(idx, st)) {
         cout << "Updated record for " << idx << ".\n";
     } else {
-        cout << "No record found for " << idx << " in this session.\n";
+        cout << "No record found for " << idx << ".\n";
     }
 }
 
 void displayAttendanceList() {
     if (!g_hasCurrentSession) {
-        cout << "No active session. Create a session first.\n";
+        cout << "No active session.\n";
         return;
     }
 
@@ -251,7 +249,46 @@ void displayAttendanceList() {
          << ", Late: "    << l << "\n";
 }
 
-// ---------- NEW (Week 4) Session persistence ----------
+// ---------- Week 4: Export to Excel-friendly CSV ----------
+void exportSessionToCSV() {
+    if (!g_hasCurrentSession) {
+        cout << "No active session to export.\n";
+        return;
+    }
+
+    string filename = "attendance_export.csv";
+    ofstream out(filename);
+
+    if (!out) {
+        cout << "Failed to create CSV file.\n";
+        return;
+    }
+
+    out << "Index Number,Status\n";
+
+    for (const auto& r : g_currentSession.getRecords()) {
+        string statusText;
+        switch (r.status) {
+            case Status::Present: statusText = "PRESENT"; break;
+            case Status::Absent:  statusText = "ABSENT";  break;
+            case Status::Late:    statusText = "LATE";    break;
+        }
+        out << r.indexNumber << "," << statusText << "\n";
+    }
+
+    int p, a, l;
+    g_currentSession.summaryCounts(p, a, l);
+
+    out << "\nSummary,,\n";
+    out << "Present," << p << "\n";
+    out << "Absent,"  << a << "\n";
+    out << "Late,"    << l << "\n";
+
+    out.close();
+
+    cout << "Exported to " << filename << "\n";
+}
+
 void saveCurrentSession() {
     if (!g_hasCurrentSession) {
         cout << "No active session to save.\n";
@@ -265,8 +302,7 @@ void saveCurrentSession() {
 }
 
 void loadSessionFromFile() {
-    cout << "\n--- Load Session From File ---\n";
-    cout << "Enter file name (e.g., session_EE201_2026-02-17.txt): ";
+    cout << "\nEnter session filename: ";
     string fname;
     cin >> fname; clearInput();
 
@@ -274,10 +310,9 @@ void loadSessionFromFile() {
     if (AttendanceSession::loadFromFile(fname, s)) {
         g_currentSession = s;
         g_hasCurrentSession = true;
-        cout << "Loaded session " << g_currentSession.getCourseCode()
-             << " on " << g_currentSession.getDate() << ".\n";
+        cout << "Session loaded.\n";
     } else {
-        cout << "Failed to load session from " << fname << ".\n";
+        cout << "Failed to load session.\n";
     }
 }
 
@@ -288,8 +323,8 @@ void studentsMenu() {
         cout << "\n=== STUDENT MANAGEMENT ===\n"
              << "1. Add Student\n"
              << "2. View Students\n"
-             << "3. Back\n"
-             << "Enter choice: ";
+             << "3. Back\n";
+
         if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
@@ -298,6 +333,7 @@ void studentsMenu() {
             case 3: break;
             default: cout << "Invalid choice.\n";
         }
+
     } while (choice != 3);
 }
 
@@ -310,10 +346,11 @@ void sessionsMenu() {
              << "3. Mark Attendance\n"
              << "4. Update Attendance\n"
              << "5. Display Attendance + Summary\n"
-             << "6. Save Current Session to File\n"  // NEW
-             << "7. Load Session From File\n"        // NEW
-             << "8. Back\n"
-             << "Enter choice: ";
+             << "6. Save Current Session\n"
+             << "7. Load Session From File\n"
+             << "8. Export Attendance to Excel (CSV)\n"
+             << "9. Back\n";
+
         if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
@@ -324,15 +361,15 @@ void sessionsMenu() {
             case 5: displayAttendanceList(); break;
             case 6: saveCurrentSession(); break;
             case 7: loadSessionFromFile(); break;
-            case 8: break;
+            case 8: exportSessionToCSV(); break;
+            case 9: break;
             default: cout << "Invalid choice.\n";
         }
-    } while (choice != 8);
+    } while (choice != 9);
 }
 
 void mainMenu() {
-    // load students on startup (OK if file not found)
-    loadStudentsFromFile();
+    loadStudentsFromFile(); // Auto-load
 
     int choice = -1;
     do {
@@ -340,20 +377,21 @@ void mainMenu() {
              << "1. Student Management\n"
              << "2. Attendance Sessions\n"
              << "3. Save Students to File\n"
-             << "4. Exit\n"
-             << "Enter choice: ";
+             << "4. Exit\n";
+
         if (!(cin >> choice)) { clearInput(); continue; }
 
         switch (choice) {
             case 1: studentsMenu(); break;
             case 2: sessionsMenu(); break;
             case 3:
-                if (saveStudentsToFile()) cout << "Students saved to students.txt\n";
-                else cout << "Failed to save students.\n";
+                if (saveStudentsToFile()) cout << "Students saved.\n";
+                else cout << "Failed.\n";
                 break;
-            case 4: cout << "Exiting...\n"; break;
+            case 4: cout << "Goodbye!\n"; break;
             default: cout << "Invalid choice.\n";
         }
+
     } while (choice != 4);
 }
 
@@ -361,6 +399,7 @@ int main() {
     mainMenu();
     return 0;
 }
+
 
 
 
