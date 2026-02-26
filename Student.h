@@ -1,8 +1,8 @@
 #ifndef STUDENT_H
 #define STUDENT_H
 
-#include <iostream>
 #include <string>
+#include <iostream>
 using namespace std;
 
 class Student {
@@ -12,22 +12,15 @@ private:
 
 public:
     Student() {}
+    Student(const string& index, const string& name)
+        : indexNumber(index), fullName(name) {}
 
-    Student(string index, string name) {
-        indexNumber = index;
-        fullName = name;
-    }
-
-    string getIndexNumber() const {
-        return indexNumber;
-    }
-
-    string getFullName() const {
-        return fullName;
-    }
+    string getIndexNumber() const { return indexNumber; }
+    string getFullName() const { return fullName; }
 
     void display() const {
-        cout << "Index Number: " << indexNumber << ", Full Name: " << fullName << endl;
+        cout << "Index Number: " << indexNumber
+             << ", Full Name: " << fullName << endl;
     }
 };
 
