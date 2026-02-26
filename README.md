@@ -1,42 +1,108 @@
-# Digital Attendance System (C++)
+Digital Attendance System (C++)
+This project is a Mid-Semester Capstone Project for EEE227 – Introduction to C++ Programming, developed using Visual Studio Code, g++, and GitHub version control.
 
-This project is a Mid-Semester Capstone Project for EEE227 – Introduction to C++ Programming.
+ Project Overview
+A console-based Digital Attendance System for hour-based lectures.
+It supports:
 
-## Week 1 Progress
+Student registration
+Lecture session creation
+Attendance marking (Present / Absent / Late)
+Updating attendance
+Viewing attendance summaries
+Saving & loading sessions
+Exporting attendance to Excel-friendly CSV
 
-### Implemented Student Class
-- Fields:
-  - `indexNumber`
-  - `fullName`
-- Includes constructor, getters, and display method.
 
-### Student Management (Week 1 Requirements)
-- Add student
-- View all registered students
+Final Repository Structure
+digital-attendance-system/
+│── main.cpp
+│── Student.h
+│── Student.cpp
+│── AttendanceSession.h
+│── AttendanceSession.cpp
+│── students.txt
+│── attendance_export.csv
+│── README.md
 
-### Project Structure (Week 1)
 
-## Week 2 Progress
-- Implemented `AttendanceSession` class
-- Added menu-driven flow for sessions
-- Can create a lecture session with: course code, date, start time, and duration
-- Shows the current session details after creation
+ Weekly Progress
+ Week 1
 
-## Week 3 Progress
-- Mark attendance with statuses: **Present / Absent / Late**
-- Update existing attendance records
-- Display attendance list for a session
-- Show summary counts (Present, Absent, Late)
-- Basic input validation (numeric choices, safe reads)
+Implemented Student class
+Fields:
 
-## Week 4 Progress
-- Implemented **file persistence** using plain text files (`fstream`)
-  - Students saved/loaded from `students.txt` (format: `INDEX|Full Name`)
-  - Sessions saved/loaded from `session_<COURSE>_<DATE>.txt`
-    - First line: `COURSE|DATE|STARTTIME|DURATION`
-    - Following lines: `Index|STATUS` where STATUS ∈ {PRESENT, ABSENT, LATE}
-- Loaded students automatically at program start
-- Added menu options:
-  - **Main Menu:** Save Students to File
-  - **Sessions Menu:** Save Current Session, Load Session From File
-- Minor refactors & comments for readability
+indexNumber
+fullName
+
+
+Added:
+
+Add Student
+View Students
+
+
+Created basic project structure
+Set up GitHub repository with initial commits
+
+
+ Week 2
+
+Implemented AttendanceSession class
+Created lecture sessions with:
+
+Course Code
+Date
+Start Time
+Duration
+
+
+Added Attendance Session menu system
+Display current session details
+Added meaningful commits showing progress
+
+
+Week 3
+
+Added full attendance features:
+
+Mark attendance (Present / Absent / Late)
+Update existing attendance records
+Display attendance list
+Attendance summary (Present / Absent / Late)
+
+
+Improved input validation and menu navigation
+Tested all functionalities
+
+
+ Week 4
+ File Persistence
+
+Save students to students.txt
+Load students automatically at startup
+Save sessions to:
+
+session_<COURSE>_<DATE>.txt
+
+
+Load session from file
+
+Final Touch: Export to Excel CSV
+
+Added attendance_export.csv
+Exported attendance list + summary into a format readable by Microsoft Excel
+This file is included in the repository as per lecturer’s requirement
+
+
+ Excel Output (CSV)
+After running the program, attendance is exported into:
+attendance_export.csv
+
+This file includes:
+
+Index Number
+Status (PRESENT / ABSENT / LATE)
+Summary counts
+
+This file opens in Microsoft Excel without any conversion.
